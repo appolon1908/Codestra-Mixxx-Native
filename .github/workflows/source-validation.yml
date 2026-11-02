@@ -1,0 +1,57 @@
+name: Owned source and security validation
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  mixxx-native-source-validation:
+    name: mixxx-native-source-validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13.18'
+      - name: Verify exact clean source
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git diff --check
+      - name: Parse every owned shell source
+        shell: bash
+        run: |
+          set -euo pipefail
+          for script in runtime/*.sh; do bash -n "$script"; done
+      - name: Install and verify exact upstream ShellCheck
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/shellcheck.tar.gz"
+          curl --fail --silent --show-error --location https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.gz --output "$archive"
+          echo "b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6  $archive" | sha256sum --check -
+          tar --no-same-owner -xzf "$archive" -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/shellcheck-v0.11.0/shellcheck" runtime/*.sh
+      - name: Run all real installer, credential and private configuration tests
+        run: python -m unittest discover -s tests -v
+  mixxx-native-secret-scan:
+    name: mixxx-native-secret-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan full source and reject candidate secret-scan overrides
+        run: bash .github/scripts/scan-secrets.sh
