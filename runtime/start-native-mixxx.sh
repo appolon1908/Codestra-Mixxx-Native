@@ -10,7 +10,8 @@ export DISPLAY=:0
 export WAYLAND_DISPLAY=wayland-0
 PID=$(pgrep -u codestra -n gnome-shell || true)
 if [ -n "$PID" ]; then
- export DBUS_SESSION_BUS_ADDRESS=$(tr '\0' '\n' </proc/$PID/environ | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p')
- export XAUTHORITY=$(tr '\0' '\n' </proc/$PID/environ | sed -n 's/^XAUTHORITY=//p')
+ DBUS_SESSION_BUS_ADDRESS=$(tr '\0' '\n' <"/proc/$PID/environ" | sed -n 's/^DBUS_SESSION_BUS_ADDRESS=//p')
+ XAUTHORITY=$(tr '\0' '\n' <"/proc/$PID/environ" | sed -n 's/^XAUTHORITY=//p')
+ export DBUS_SESSION_BUS_ADDRESS XAUTHORITY
 fi
 exec /home/codestra/Desktop/DJONE-Mixxx/mixxx-2.5.6/build-djone/mixxx

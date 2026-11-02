@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "policy_kind": "source_merge",
+  "repository": "appolon1908/Codestra-Mixxx-Native",
+  "authorization_date": "2026-11-02",
+  "required_checks": [
+    {
+      "context": "mixxx-native-source-validation",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/source-validation.yml"
+    },
+    {
+      "context": "mixxx-native-secret-scan",
+      "integration_id": 15368,
+      "workflow": ".github/workflows/source-validation.yml"
+    }
+  ],
+  "replaces_contexts": [
+    "codestra-control-plane",
+    "codestra/control-plane"
+  ],
+  "preserve": [
+    "other_required_checks",
+    "review_requirements",
+    "ref_conditions",
+    "bypass_actors",
+    "enforcement",
+    "force_push_protection",
+    "deletion_protection",
+    "deployment_authority"
+  ],
+  "production_activation_authorized": false,
+  "note": "GitHub rulesets remain enforcement authority. This validates only the actual owned source, isolated contract/build/configuration behavior and dependency/secret checks. It does not certify model, GPU, audio, provider, native engine, custodian, runtime, deployment or production readiness, and grants no live effects."
+}
